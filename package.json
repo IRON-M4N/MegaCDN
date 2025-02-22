@@ -2,9 +2,9 @@
   "name": "megacdn",
   "version": "1.0.0",
   "description": "A lightweight and serverless CDN utilizing MEGA for file storage and delivery.",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "pm2 start index.js --name 'megacdn' --restart-delay 5000 --log-date-format 'YYYY-MM-DD HH:mm:ss' --attach",
+    "start": "pm2 start api/index.js --name 'megacdn' --restart-delay 5000 --log-date-format 'YYYY-MM-DD HH:mm:ss' --attach",
     "lint": "eslint . --fix",
     "stop": "pm2 stop megacdn",
     "restart": "pm2 restart megacdn"
