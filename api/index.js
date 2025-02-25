@@ -9,7 +9,11 @@ const fastify = require("fastify")({
 });
 const Mega = require('megajs');
 
-// plugins 
+fastify.register(require("@fastify/static"), {
+    root: require("path").join(__dirname, "../public"),
+    prefix: "/",
+});
+// plugins
 fastify.register(fastifyRateLimit, config.rateLimit);
 fastify.register(fastifyMultipart, {
   limits: {
@@ -79,7 +83,7 @@ fastify.get("/media/*", async (request, reply) => {
 var start = async () => {
   try {
     await mega.initialize();
-    console.log("Logged IN!");
+    console.log("Logged IN");
     await fastify.listen({ port: config.server.port, host: '0.0.0.0' });
     console.log(`Running at ${config.server.domain}:${config.server.port}`);
   } catch (err) {
