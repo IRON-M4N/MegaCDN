@@ -1,48 +1,47 @@
+#particles-js {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: #121212;
+    z-index: -1;
+}
+.highlight {
+    color: red;
+    font-weight: bold;
+}
 body {
     font-family: Arial, sans-serif;
     text-align: center;
     margin: 0;
     padding: 0;
-    background: #f0f0f0;
+    background: #121212;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background: #1e1e1e;
+    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
 }
+
 .logo {
     font-size: 20px;
     font-weight: bold;
+    color: white;
 }
+
 .red-dot {
     color: red;
 }
-.header-buttons button {
-    padding: 10px 15px;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-}
-.login {
-    background: #ddd;
-    border-radius: 5px;
-}
-.new {
-    background: red;
-    color: white;
-    border-radius: 5px;
-}
 .hero {
-    margin-top: 50px;
-    font-size: 24px;
-}
-.highlight {
-    color: red;
-    font-weight: bold;
+    margin-top: 40px;
+    font-size: 22px;
+    flex: 1;
 }
 .awesome-container {
     display: flex;
@@ -51,86 +50,107 @@ header {
     margin-top: 20px;
 }
 .upload-box {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    padding: 35px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    display: inline-block;
-    width: 360px;
+    padding: 30px 40px; 
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
+    width: 420px; 
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: transform 0.3s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    margin-bottom: 60px; 
 }
 .upload-box:hover {
     transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(255, 255, 255, 0.15);
 }
 .upload {
-    background: linear-gradient(45deg, #ff4b2b, #ff416c);
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
     color: white;
-    padding: 16px;
+    padding: 12px;
     font-size: 18px;
     border-radius: 8px;
     width: 100%;
     border: none;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
     cursor: pointer;
+    font-weight: bold;
     transition: 0.3s;
 }
 .upload:hover {
-    background: linear-gradient(45deg, #e1442b, #e13a66);
+    background: linear-gradient(45deg, #e13a66, #e1442b);
+    transform: scale(1.05);
 }
+
 .receive {
     background: rgba(255, 255, 255, 0.1);
-    padding: 14px;
+    padding: 12px;
     width: 100%;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    color: #333;
-    cursor: pointer;
-    transition: 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #888;
+    font-weight: bold;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
-.receive:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-.upload i, .receive i {
-    margin-right: 8px;
-}
+
 .upload-box p {
-    font-size: 13px;
-    color: #555;
+    font-size: 14px;
+    color: #ddd;
     margin-top: 10px;
 }
-.features {
+.progress-container {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+    display: none;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 6px;
+    background: #ff4b2b;
+    transition: width 0.2s ease-in-out;
+    border-radius: 5px;
+}
+
+#progressText {
+    font-size: 13px;
+    color: white;
+    margin-top: 5px;
+    display: none;
+}
+.github-btn {
+    background: black;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.github-btn i {
+    margin-right: 6px;
+}
+footer {
     display: flex;
     justify-content: center;
-    margin-top: 50px;
+    margin-top: auto; 
     padding: 20px;
 }
-.feature {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    width: 250px;
-    margin: 10px;
-    text-align: center;
-}
-.feature i {
-    font-size: 30px;
-    color: #444;
-    margin-bottom: 10px;
-}
-.feature h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-.feature p {
+
+.copyright-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 8px;
     font-size: 14px;
-    color: #666;
+    color: #ccc;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 3px 8px rgba(255,255,255,0.1);
 }
-.feature a {
-    text-decoration: none;
-    color: blue;
-    font-size: 14px;
-}
+
