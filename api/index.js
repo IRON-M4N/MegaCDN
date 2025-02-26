@@ -30,6 +30,11 @@ fastify.addHook("onSend", (request, reply, payload, done) => {
 });
 
 fastify.post("/upload", async (request, reply) => {
+  var scheme = request.raw.socket.encrypted ? "https" : "http"
+  var hostname = request.hostname;
+  var port = request.raw.socket.localPort;
+  var origin = hostname === "localhost" ? `${scheme}://${hostname}:${port}` : `${scheme}://${hostname}`;
+  
   var files = [];
   try {
     for await (var part of request.parts()) {
@@ -53,7 +58,7 @@ fastify.post("/upload", async (request, reply) => {
     return {
       success: true,
       files: uploads.map((upload) => ({
-        url: `${config.server.domain}/media/${upload.url.replace(/^https:\/\/mega\.nz\/file\//, "").replace("#", "@")}`,
+        url: `${origin}/media/${upload.url.replace(/^https:\/\/mega\.nz\/file\//, "").replace("#", "@")}`,
         name: upload.filename,
         size: upload.size,
         mime: upload.mime,
