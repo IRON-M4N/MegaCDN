@@ -6,7 +6,6 @@ module.exports = {
   },
   server: {
     port: process.env.PORT || 3000,
-    domain: process.env.DOMAIN || 'https://cdn.ironman.biz.id', //your domain base url
     maxFileSize: 1024 * 1024 * 100, //100 mb
     allowedTypes: [
       'image/jpeg',
