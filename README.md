@@ -18,7 +18,6 @@ Modify `config.js` or use environment variables. Example `.env` file:
 ```
 EMAIL=ironman@onlyfans.wtf
 PASS=Katarenai nemurenai toroimerai
-DOMAIN=https://cdn.ironman.my.id
 TEMP=memory
 ```
 
@@ -59,7 +58,6 @@ curl -X POST -F "file=@image.jpg" http://yourdomain.com/upload
 ## To-Do  
 - [ ] Add multiple accounts support
 - [ ] Proper logging (error and alerts)
-- [ ] Fetch origin (domain) automatically
 
 ## Contributing  
 1. Fork the repository  
