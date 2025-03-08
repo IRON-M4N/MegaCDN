@@ -88,12 +88,12 @@ fastify.get("/media/*", async (request, reply) => {
 var start = async () => {
   try {
     await mega.initialize();
-    console.log("Logged IN");
-    await fastify.listen({ port: config.server.port, host: '0.0.0.0' });
-    console.log(`Running at ${config.server.domain}:${config.server.port}`);
+    console.log("Logged IN!!");
+    fastify.listen({ port: config.server.port, host: '0.0.0.0' });
+    console.log("CDN is Alive!?");
   } catch (err) {
-    fastify.log.error(err);
-    console.log("EXITING");
+    console.log(err);
+    console.log("EXITING!");
     process.exit(1);
   }
 };
