@@ -16,8 +16,7 @@ npm install
 Modify `config.js` or use environment variables. Example `.env` file:  
 
 ```
-EMAIL=ironman@onlyfans.wtf
-PASS=Katarenai nemurenai toroimerai
+MEGA_ACCOUNT=email:pass;email:pass
 TEMP=memory
 ```
 
@@ -31,16 +30,30 @@ To stop or restart:
 ```sh
 npm stop  
 npm restart  
-```  
+```
 
-## Uploading Files  
+## **Uploading Files**  
 
 Send a `POST` request to `/upload` with a multipart form containing a file.  
 
-Example using `curl`:  
+#### **Single Mode (Default)**  
+Uploads the file using the default (first) account.  
 ```sh
-curl -X POST -F "file=@image.jpg" http://yourdomain.com/upload
-```  
+curl -X POST -F "file=@image.jpg" -F "mode=single" http://yourdomain.com/upload
+```
+
+#### **Dual Mode (Specify Account)**  
+Uploads the file to a specific account by providing an email.  
+```sh
+curl -X POST -F "file=@image.jpg" -F "mode=dual" -F "email=user@example.com" http://yourdomain.com/upload
+```
+
+### **Parameters Explained:**  
+| Parameter  | Description |
+|------------|-------------|
+| `file` | The file to upload. |
+| `mode` | Upload mode: `single` (default) or `dual` (requires `email`). |
+| `email` | (Optional) Required if `mode=dual`, specifies which account to use. |
 
 ### Response Example  
 ```json
@@ -56,8 +69,8 @@ curl -X POST -F "file=@image.jpg" http://yourdomain.com/upload
 ```  
 
 ## To-Do  
-- [ ] Add multiple accounts support
 - [ ] Proper logging (error and alerts)
+- [ ] Fix webpage
 
 ## Contributing  
 1. Fork the repository  
