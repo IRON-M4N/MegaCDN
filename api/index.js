@@ -4,22 +4,18 @@ const FileType = require("file-type");
 const stream = require("stream");
 const mega = require("../mega.js");
 const config = require("../config.js");
-const fastify = require("fastify")({
-  logger: 0,
-});
+const fastify = require("fastify")({ logger: 0 });
 const Mega = require('megajs');
 
+//plugins
 fastify.register(require("@fastify/static"), {
-    root: require("path").join(__dirname, "../public"),
-    prefix: "/",
+  root: require("path").join(__dirname, "../public"),
+  prefix: "/",
 });
-// plugins
+
 fastify.register(fastifyRateLimit, config.rateLimit);
 fastify.register(fastifyMultipart, {
-  limits: {
-    fileSize: config.server.maxFileSize,
-    files: 10,
-  },
+  limits: { fileSize: config.server.maxFileSize, files: 10 },
 });
 
 fastify.addHook("onSend", (request, reply, payload, done) => {
@@ -30,14 +26,21 @@ fastify.addHook("onSend", (request, reply, payload, done) => {
 });
 
 fastify.post("/upload", async (request, reply) => {
-  var scheme = request.raw.socket.encrypted ? "https" : "http"
+  var scheme = request.raw.socket.encrypted ? "https" : "http";
   var hostname = request.hostname;
   var port = request.raw.socket.localPort;
   var origin = hostname === "localhost" ? `${scheme}://${hostname}:${port}` : `${scheme}://${hostname}`;
-  
+  var mode = "single";
+  var query = null;
   var files = [];
+
   try {
     for await (var part of request.parts()) {
+      if (part.type === "field") {
+        if (part.fieldname === "mode") mode = part.value || "single";
+        if (part.fieldname === "email" && mode === "dual") query = { email: part.value };
+        continue;
+      }
       if (!part.file) continue;
       var buffer = await part.toBuffer();
       var fileType = await FileType.fromBuffer(buffer);
@@ -52,20 +55,22 @@ fastify.post("/upload", async (request, reply) => {
       fileStream.end(buffer);
       files.push({ filename, stream: fileStream, mime: fileType.mime });
     }
+
     var uploads = await Promise.all(
-      files.map((file) => mega.uploadFile(file.filename, file.stream))
+      files.map((file) => mega.uploadFile(file.filename, file.stream, mode, query))
     );
+
     return {
       success: true,
       files: uploads.map((upload) => ({
         url: `${origin}/media/${upload.url.replace(/^https:\/\/mega\.nz\/file\//, "").replace("#", "@")}`,
-        name: upload.filename,
+        name: upload.name,
         size: upload.size,
         mime: upload.mime,
       })),
     };
   } catch (error) {
-    request.log.error(error);
+    console.log("Upload error:", error);
     reply.code(400).send({ error: error.message });
   }
 });
@@ -80,7 +85,7 @@ fastify.get("/media/*", async (request, reply) => {
     reply.header("Content-Disposition", `inline; filename="${file.name}"`);
     return reply.send(file.download());
   } catch (error) {
-    request.log.error(error);
+    console.log("Media error:", error);
     reply.code(404).send({ error: error.message });
   }
 });
@@ -88,12 +93,17 @@ fastify.get("/media/*", async (request, reply) => {
 var start = async () => {
   try {
     await mega.initialize();
-    console.log("Logged IN!!");
-    fastify.listen({ port: config.server.port, host: '0.0.0.0' });
-    console.log("CDN is Alive!?");
+    console.log("Logged IN");
+    fastify.listen({ port: config.server.port, host: '0.0.0.0' }, (err, address) => {
+      if (err) {
+        console.error(err);
+        process.exit(1);
+      }
+      console.log("CDN is alive!?");
+    });
   } catch (err) {
-    console.log(err);
-    console.log("EXITING!");
+    console.error(err);
+    console.log("EXITING");
     process.exit(1);
   }
 };
