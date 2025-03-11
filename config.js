@@ -1,8 +1,13 @@
 module.exports = {
   mega: {
-    email: process.env.EMAIL || 'ironman@onlyfans.com', //mega email
-    password: process.env.PASS || 'Katarenai nemurenai toroimerai', //mega password
-    storagePath: './storage'
+    accounts: (process.env.MEGA_ACCOUNT|| "ironman@onlyfans.com:katarenai nemurenai toroimerai") //email:password
+      .split(";")
+      .map(a => {
+        const [email, password] = a.split(":");
+        return email && password ? { email, password } : null;
+      })
+      .filter(Boolean),
+    storagePath: "./storage"
   },
   server: {
     port: process.env.PORT || 3000,
