@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: megacdn
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free  # Change to 'starter' or 'pro' if needed
+    envVars:
+      - key: MEGA_ACCOUNT
+        value: email:pass;email:pass
+      - key: PORT
+        value: 3000
+      - key: TEMP
+        value: memory

@@ -1,0 +1,11 @@
+build:
+  buildpacks:
+    - heroku/nodejs
+
+run:
+  web: npm start
+
+env:
+  MEGA_ACCOUNT: email:pass;email:pass
+  PORT: 3000
+  TEMP: memory
