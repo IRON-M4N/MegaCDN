@@ -37,83 +37,102 @@ function fullUpload(upstream) {
 
 class Client {
   constructor() {
-    this.lock = new Mutex();
-    this.storage = null;
+    this.accounts = [];
   }
 
   async initialize() {
-    var options = {
-      email: config.mega.email,
-      password: config.mega.password,
-      autologin: true,
-      autoload: true
-    };
-    if (config.storage === 'file') {
-      var storagePath = path.resolve(config.mega.storagePath);
-      if (!fs.existsSync(storagePath)) fs.mkdirSync(storagePath, { recursive: true });
-      options.storagePath = storagePath;
+    var _accounts = (config.mega.accounts && config.mega.accounts.length)
+      ? config.mega.accounts
+      : [{ email: config.mega.email, password: config.mega.password }];
+    for (var i = 0; i < _accounts.length; i++) {
+      var acct = _accounts[i];
+      var options = {
+        email: acct.email,
+        password: acct.password,
+        autologin: true,
+        autoload: true
+      };
+      if (config.storage === 'file') {
+        var storagePath = path.resolve(config.mega.storagePath);
+        if (!fs.existsSync(storagePath)) fs.mkdirSync(storagePath, { recursive: true });
+        options.storagePath = storagePath;
+      }
+      try {
+        var storage = await new mega.Storage(options).ready;
+        this.accounts.push({
+          email: acct.email,
+          storage: storage,
+          lock: new Mutex()
+        });
+      } catch (e) {
+        console.error('Error setting up storage for', acct.email, e);
+      }
     }
-    try {
-      this.storage = await new mega.Storage(options).ready;
-    } catch (e) {
-      console.error('Error initializating storage:', e);
-      throw new Error(`Login failed: ${e}`);
+    if (this.accounts.length === 0) {
+      throw new Error('No account could be setup successfully');
     }
   }
 
-  async uploadFile(filename, stream) {
-    if (!this.storage) {
-      console.error('Storage not set up when trying to upload:', filename);
-      throw new Error('Storage not setup yet!');
+  getAcc(email) {
+    for (var i = 0; i < this.accounts.length; i++) {
+      if (this.accounts[i].email === email) return this.accounts[i];
     }
-    var release = await this.lock.acquire();
+    return null;
+  }
+
+  getZeroAcc() {
+    return this.accounts[0];
+  }
+
+  async uploadFile(filename, stream, mode, query) {
+    var account;
+    if (mode === 'dual' && query && query.email) {
+      account = this.getAcc(query.email);
+      if (!account) throw new Error('Account ' + query.email + ' not found');
+    } else {
+      account = this.getZeroAcc();
+    }
+    if (!account || !account.storage) throw new Error('Storage not available for this account');
+    var release = await account.lock.acquire();
     try {
       if (config.storage === 'file') {
         var filePath = path.resolve(config.mega.storagePath, filename);
         var writeStream = fs.createWriteStream(filePath);
         stream.pipe(writeStream);
         await new Promise((resolve, reject) => {
-          writeStream.on('finish', () => resolve());
-          writeStream.on('error', err => {
-            console.error('Error saving file:', filePath, err);
-            reject(err);
-          });
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
         });
         var fileSize = fs.statSync(filePath).size;
-        var upstream = this.storage.upload({ name: filename, size: fileSize, allowUploadBuffering: true });
+        var upstream = account.storage.upload({ name: filename, size: fileSize, allowUploadBuffering: true });
         fs.createReadStream(filePath).pipe(upstream);
         var result = await fullUpload(upstream);
         fs.unlink(filePath, err => {
-          if (err) console.error('Couldnt delete file from disk:', filePath, err);
+          if (err) console.error('Could not delete file from disk:', filePath, err);
         });
         return result;
       } else {
         var buffer = await streamToBuffer(stream);
         var size = buffer.length;
-        var ups = this.storage.upload({ name: filename, size: size, allowUploadBuffering: true });
+        var ups = account.storage.upload({ name: filename, size: size, allowUploadBuffering: true });
         Readable.from(buffer).pipe(ups);
         var res = await fullUpload(ups);
         buffer = null;
         return res;
       }
     } catch (error) {
-      console.error('Error uploading file', filename, error);
-      throw new Error(`Upload failed: ${error.message}`);
+      console.error('Error uploading file', filename, 'using account', account.email, error);
+      throw new Error('Upload failed: ' + error.message);
     } finally {
       release();
     }
   }
 
   async getFile(filePath) {
-    if (!this.storage) {
-      console.error('Storage not set up when trying to get file:', filePath);
-      throw new Error('Storage not setup yet!');
-    }
-    var file = Object.values(this.storage.files).find(f => f.name === path.basename(filePath));
-    if (!file) {
-      console.error('File not found:', filePath);
-      throw new Error('File not found');
-    }
+    var primary = this.getZeroAcc();
+    if (!primary) throw new Error('No account available');
+    var file = Object.values(primary.storage.files).find(f => f.name === path.basename(filePath));
+    if (!file) throw new Error('File not found');
     return file;
   }
 }
