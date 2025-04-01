@@ -19,7 +19,7 @@ npm install
 [![Heroku](https://img.shields.io/badge/Heroku-000000?style=for-the-badge&logo=heroku&logoColor=white)](https://heroku.com/deploy?template=https://github.com/IRON-M4N/MegaCDN)
 
 #### Deploy on Vercel
-1. *[Create Verce Account](https://vercel.com/signup) If You Don't Have.*
+1. *[Create Vercel Account](https://vercel.com/signup) If You Don't Have.*
 2. *Deploy on Vercel.* <br>
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FIRON-M4N%2FMegaCDN&env=MEGA_ACCOUNT,PORT&envDescription=provide%20multiple%20accounts%20in%20this%20format%20email%3Apass%3Bemail%3Apass%0Afor%20port%20use%203000%20or%20any)
 
