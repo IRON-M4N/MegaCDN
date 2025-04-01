@@ -25,8 +25,6 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: #1e1e1e;
-    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
 }
 
 .logo {
@@ -44,10 +42,15 @@ header {
     flex: 1;
 }
 .awesome-container {
+    width: 80%; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 20px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    min-height: 50vh; 
 }
 .upload-box {
     background: rgba(255, 255, 255, 0.1);
@@ -154,3 +157,25 @@ footer {
     box-shadow: 0 3px 8px rgba(255,255,255,0.1);
 }
 
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .middle-container {
+        width: 95%; 
+        padding: 15px;
+        min-height: auto; 
+    }
+
+    .upload-box{
+        width:70%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .middle-container {
+        width: 100%;
+        padding: 10px;
+        text-align: center; /* Center text for better readability */
+    }
+}
