@@ -11,7 +11,7 @@ function streamToBuffer(stream) {
     stream.on('data', chunk => chunks.push(chunk));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
     stream.on('error', err => {
-      console.error('Error stream:', err);
+      console.error('Error creating stream:', err);
       reject(err);
     });
   });
@@ -29,7 +29,7 @@ function fullUpload(upstream) {
       });
     });
     upstream.on('error', err => {
-      console.error('Error in upload:', err);
+      console.error('Couldnt upload media:', err);
       reject(err);
     });
   });
@@ -65,11 +65,11 @@ class Client {
           lock: new Mutex()
         });
       } catch (e) {
-        console.error('Error setting up storage for', acct.email, e);
+        console.error(`Error setting up storage for: ${acct.email}\nError: ${e}\nPossible serverless storage config issue. Check temp storage env.`);
       }
     }
     if (this.accounts.length === 0) {
-      throw new Error('No account could be setup successfully');
+      throw new Error('No account could be setup successfully at least need one account');
     }
   }
 
@@ -88,11 +88,11 @@ class Client {
     var account;
     if (mode === 'dual' && query && query.email) {
       account = this.getAcc(query.email);
-      if (!account) throw new Error('Account ' + query.email + ' not found');
+      if (!account) throw new Error('Account:' + query.email + ' not found or banned');
     } else {
       account = this.getZeroAcc();
     }
-    if (!account || !account.storage) throw new Error('Storage not available for this account');
+    if (!account || !account.storage) throw new Error('Storage not available for this account payment required or forbidden');
     var release = await account.lock.acquire();
     try {
       if (config.storage === 'file') {
@@ -130,7 +130,7 @@ class Client {
 
   async getFile(filePath) {
     var primary = this.getZeroAcc();
-    if (!primary) throw new Error('No account available');
+    if (!primary) throw new Error('No account available at least need one account');
     var file = Object.values(primary.storage.files).find(f => f.name === path.basename(filePath));
     if (!file) throw new Error('File not found');
     return file;
