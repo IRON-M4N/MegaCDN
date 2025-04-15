@@ -2,10 +2,12 @@ const fastifyRateLimit = require("@fastify/rate-limit");
 const fastifyMultipart = require("@fastify/multipart");
 const FileType = require("file-type");
 const stream = require("stream");
+const { runtime, formatBytes } = require("@nexoracle/utils");
+require("dotenv").config();
 const mega = require("../mega.js");
 const config = require("../config.js");
 const fastify = require("fastify")({ logger: 0 });
-const Mega = require('megajs');
+const Mega = require("megajs");
 
 //plugins
 fastify.register(require("@fastify/static"), {
@@ -56,19 +58,35 @@ fastify.post("/upload", async (request, reply) => {
       files.push({ filename, stream: fileStream, mime: fileType.mime });
     }
 
-    var uploads = await Promise.all(
-      files.map((file) => mega.uploadFile(file.filename, file.stream, mode, query))
-    );
+    var uploads = await Promise.all(files.map((file) => mega.uploadFile(file.filename, file.stream, mode, query)));
 
-    return {
+    if (config.autoDelete?.enable) {
+      const deleteAfter = config.autoDelete?.minutes;
+      uploads.forEach((upload) => {
+        mega.scheduleFileForDeletion(upload.name, deleteAfter);
+      });
+    }
+
+    const response = {
       success: true,
       files: uploads.map((upload) => ({
         url: `${origin}/media/${upload.url.replace(/^https:\/\/mega\.nz\/file\//, "").replace("#", "@")}`,
         name: upload.name,
         size: upload.size,
+        formattedSize: formatBytes(upload.size),
         mime: upload.mime,
       })),
     };
+
+    if (config.autoDelete?.enable) {
+      const deleteAfter = config.autoDelete?.minutes;
+      response.files.forEach((file) => {
+        file.expires = deleteAfter * 60 + " sec";
+        file.formattedExpires = runtime(deleteAfter * 60);
+      });
+    }
+
+    return response;
   } catch (error) {
     console.log("Upload error:", error);
     reply.code(400).send({ error: error.message });
@@ -93,13 +111,13 @@ fastify.get("/media/*", async (request, reply) => {
 var start = async () => {
   try {
     await mega.initialize();
-    console.log("Logged IN");
-    fastify.listen({ port: config.server.port, host: '0.0.0.0' }, (err, address) => {
+    console.log("Mega Account Logged IN");
+    fastify.listen({ port: config.server.port, host: "0.0.0.0" }, (err, address) => {
       if (err) {
         console.error(err);
         process.exit(1);
       }
-      console.log("CDN is alive!?");
+      console.log(`CDN is alive!? http://localhost:${config.server.port}`);
     });
   } catch (err) {
     console.error(err);
