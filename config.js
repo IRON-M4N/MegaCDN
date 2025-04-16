@@ -27,7 +27,7 @@ module.exports = {
   },
   server: {
     port: process.env.PORT || 3000,
-    maxFileSize: process.env.MAX_FILE_SIZE || 1024 * 1024 * 100, // 100 MB
+    maxFileSize: process.env.MAX_FILE_SIZE || 100, // 100 MB
     maxFiles: process.env.MAX_FILES || 10, // Max 10 files
     cacheTTL: process.env.CACHE_TTL || 3600, // 1 hour you can change it to any seconds
     allowedTypes: [
