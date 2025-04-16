@@ -17,7 +17,7 @@ fastify.register(require("@fastify/static"), {
 
 fastify.register(fastifyRateLimit, config.rateLimit);
 fastify.register(fastifyMultipart, {
-  limits: { fileSize: config.server.maxFileSize, files: config.server.maxFiles },
+  limits: { fileSize: 1024 * 1024 * config.server.maxFileSize, files: config.server.maxFiles },
 });
 
 fastify.addHook("onSend", (request, reply, payload, done) => {

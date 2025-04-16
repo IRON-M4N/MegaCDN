@@ -35,7 +35,7 @@ npm install
 
 1. _[Create Vercel Account](https://vercel.com/signup) If You Don't Have._
 2. _Deploy on Vercel._ <br>
-   [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FIRON-M4N%2FMegaCDN&env=MEGA_ACCOUNT,PORT&envDescription=provide%20multiple%20accounts%20in%20this%20format%20email%3Apass%3Bemail%3Apass%0Afor%20port%20use%203000%20or%20any)
+   [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](<https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FIRON-M4N%2FMegaCDN&env=MEGA_ACCOUNT,PORT,TEMP,MAX_REQUESTS,RATE_LIMIT,AUTO_DELETE,DELETE_TIME,MONGODB_URI,AUTHORIZATION,AUTH_TOKEN,MAX_FILE_SIZE,MAX_FILES,CACHE_TTL&envDescription=Required%20env%20variables%3A%0A-%20MEGA_ACCOUNT%3A%20email%3Apass%3Bemail%3Apass%0A-%20PORT%3A%203000%0A%0AOptional%20env%20variables%3A%0A-%20TEMP%3A%20memory%20or%20file%0A-%20AUTO_DELETE%3A%20true%2Ffalse%0A-%20AUTH_TOKEN%3A%20Your%20Bearer%20Token%20(if%20AUTHORIZATION%3Dtrue)%0A-%20MAX_FILE_SIZE%3A%20In%20MB%0A-%20CACHE_TTL%3A%20In%20seconds>)
 
 #### Deploy To Railway
 
@@ -53,13 +53,14 @@ npm install
 
 1. _[Create Account](https://app.koyeb.com/auth/signup) If You Don't Have._
 2. _Now Deploy._ <br>
-   [![Koyeb](https://img.shields.io/badge/Koyeb-000000?style=for-the-badge&logo=koyeb&logoColor=white)](https://app.koyeb.com/deploy?type=git&repository=github.com/IRON-M4N/MegaCDN&name=MegaCDN&builder=buildpack&env[MEGA_ACCOUNT]=email:pass&env[PORT]=3000&env[TEMP]=memory)
+   [![Koyeb](https://img.shields.io/badge/Koyeb-000000?style=for-the-badge&logo=koyeb&logoColor=white)](https://app.koyeb.com/deploy?type=git&repository=github.com/IRON-M4N/MegaCDN&name=MegaCDN&builder=buildpack&env[MEGA_ACCOUNT]=email:pass;email:pass&env[PORT]=3000&env[TEMP]=memory&env[MAX_REQUESTS]=100&env[RATE_LIMIT]=1%20minute&env[AUTO_DELETE]=false&env[DELETE_TIME]=1440&env[MONGODB_URI]=null&env[AUTHORIZATION]=false&env[AUTH_TOKEN]=YOUR_BEARER_TOKEN&env[MAX_FILE_SIZE]=100&env[MAX_FILES]=10&env[CACHE_TTL]=3600)
 
 ## Configuration
 
 Modify `config.js` or use environment variables. Example `.env` file:
 
 ```
+PORT=3000                           # Port to run the app
 MEGA_ACCOUNT=email:pass;email:pass  # Multiple accounts for load balancing
 TEMP=memory                         # Upload storage option
 AUTO_DELETE=true                    # Enable/disable auto-deletion
