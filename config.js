@@ -1,3 +1,5 @@
+const { toBool } = require("@nexoracle/utils");
+
 module.exports = {
   mega: {
     accounts: (process.env.MEGA_ACCOUNT || "ironman@onlyfans.com:katarenai nemurenai toroimerai") //email:password
@@ -10,19 +12,24 @@ module.exports = {
     storagePath: "./storage",
   },
   rateLimit: {
-    max: 100,
-    timeWindow: "1 minute", // 100 req per minute change to ur need
+    max: process.env.MAX_REQUESTS || 100,
+    timeWindow: process.env.RATE_LIMIT || "1 minute", // 100 req per minute change to ur need
   },
   storage: process.env.TEMP || "memory", // 'file' or 'memory' based on ur needs
   autoDelete: {
-    enable: process.env.AUTO_DELETE || false, // Set true to enable auto-deletion
+    enable: toBool(process.env.AUTO_DELETE) || false, // Set true to enable auto-deletion
     minutes: process.env.DELETE_TIME || 1440, // Default: 1 day (1440 minutes)
     mongodb: process.env.MONGODB_URI || null, // Replace null with your mongodb uri if u wanna use monogdb
   },
+  auth: {
+    enable: toBool(process.env.AUTHORIZATION) || false, // false by default
+    keys: (process.env.AUTH_TOKEN || "Maher").split(",").filter(Boolean), // 'key1,key2'
+  },
   server: {
     port: process.env.PORT || 3000,
-    maxFileSize: 1024 * 1024 * 100, //100 mb
-    cacheTTL: 3400, //1hrs you can change it to any milliseconds
+    maxFileSize: process.env.MAX_FILE_SIZE || 1024 * 1024 * 100, // 100 MB
+    maxFiles: process.env.MAX_FILES || 10, // Max 10 files
+    cacheTTL: process.env.CACHE_TTL || 3600, // 1 hour you can change it to any seconds
     allowedTypes: [
       "image/jpeg",
       "image/jpg",

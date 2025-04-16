@@ -1,133 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MegaCDN.mg</title>
+    <title>MegaCDN</title>
     <meta name="description" content="A lightweight and serverless CDN utilizing MEGA for file storage and delivery.">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="math, quiz, game, difficulty, levels, learning">
+    <meta name="keywords" content="file upload, CDN, MEGA, storage, delivery">
     <meta name="author" content="IRON-M4N">
-    <link rel="icon" type="image/jpeg" href="https://cdn.ironman.my.id/i/6506j4.jpeg">
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/jpeg" href="https://cdn.ironman.my.id/i/6506j4.jpeg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
 </head>
+
 <body>
 
-    <div id="particles-js"></div> 
+    <div id="particles-js"></div>
     <header>
         <div class="logo">
-            <i class="fa fa-cloud"></i> mega<span class="red-dot">CDN</span>
+            <i class="fa fa-cloud"></i> Mega<span class="red-dot">CDN</span>
         </div>
         <div class="header-buttons">
-            <a href="https://github.com/IRON-M4N/MegaCDN/" target="_blank" class="github-btn">
+            <a href="https://cdn2.nexoracle.com" target="_blank" class="github-btn">
+                <i class="fa fa-globe"></i> Website
+            </a>
+            <a href="https://github.com/IRON-M4N/MegaCDN" target="_blank" class="github-btn">
                 <i class="fa-brands fa-github"></i> GitHub
             </a>
         </div>
     </header>
+
+    <div class="notification-container" id="notificationContainer"></div>
 
     <section class="hero">
         <h1>The fastest way to transfer <span class="highlight">large files</span></h1>
 
         <div class="awesome-container">
             <div class="upload-box">
-                <input type="file" id="fileInput" hidden>
-                <button class="upload" onclick="document.getElementById('fileInput').click()">
-                    <i class="fa fa-upload"></i> Upload files
-                </button>
+                <div class="drag-zone" id="dragZone">
+                    <i class="fa fa-cloud-upload-alt drag-icon"></i>
+                    <div class="drag-text">Drag & drop files here</div>
+                    <div class="drag-subtext">or use the buttons below</div>
+                </div>
+
+                <div class="upload-buttons">
+                    <input type="file" id="fileInput" hidden multiple>
+                    <button class="upload" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa fa-upload"></i> Upload files
+                    </button>
+                    <button class="upload" id="folderUpload">
+                        <i class="fa fa-folder-open"></i> Upload folder
+                    </button>
+                </div>
 
                 <p class="placeholder-text">Secure & Fast File Uploads</p>
-              
-                <div class="progress-container" id="progressContainer" style="display: none;">
-                    <div class="progress-bar" id="progress"></div>
-                </div>
-                <p id="txt" style="display: none;"></p>
-                <p id="dl" style="display: none;"></p>
+
+                <div class="file-list" id="fileList"></div>
             </div>
         </div>
-
     </section>
 
     <footer>
         <div class="copyright-box">
-            &copy; megaCDN Uploader 2025
+            &copy; MegaCDN Uploader 2025 <br> Designed by <a href="https://maher-xubair.is-a.dev">Maher Zubair</a>
         </div>
     </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            particlesJS('particles-js', {
-                "particles": {
-                    "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
-                    "color": { "value": "#ff00ff" },
-                    "shape": { "type": "circle" },
-                    "opacity": { "value": 0.5 },
-                    "size": { "value": 3, "random": true },
-                    "line_linked": { "enable": true, "distance": 150, "color": "#ff00ff", "opacity": 0.4, "width": 1 },
-                    "move": { "enable": true, "speed": 2 }
-                },
-                "interactivity": {
-                    "events": {
-                        "onhover": { "enable": true, "mode": "repulse" },
-                        "onclick": { "enable": true, "mode": "push" }
-                    }
-                },
-                "retina_detect": true
-            });
-        });
-
-        document.getElementById('fileInput').addEventListener('change', async function(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-            let progressContainer = document.getElementById('progressContainer');
-            let progress = document.getElementById('progress');
-            let txt = document.getElementById('txt');
-            let dl = document.getElementById('dl');
-            progressContainer.style.display = "block";
-            txt.style.display = "block";
-            txt.innerText = "Uploading...";
-            progress.style.width = "0%";
-            dl.style.display = "none";
-            let formData = new FormData();
-            formData.append("file", file);
-            try {
-                let xhr = new XMLHttpRequest();
-                xhr.open("POST", "/upload", true);
-                xhr.upload.onprogress = function(event) {
-                    if (event.lengthComputable) {
-                        let percentComplete = (event.loaded / event.total) * 100;
-                        progress.style.width = percentComplete + "%";
-                        txt.innerText = Math.round(percentComplete) + "%";
-                    }
-                };
-
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        let response = JSON.parse(xhr.responseText);
-                        if (response.success) {
-                            txt.innerText = "Uploading Complete!";
-                            progress.style.width = "100%";
-                            dl.style.display = "block";
-                            dl.innerHTML = `<a href="${response.files[0].url}" target="_blank">Download File</a>`;
-                            setTimeout(() => {
-                                progressContainer.style.display = "none";
-                                txt.style.display = "none";
-                            }, 2000);
-                        } else {
-                            txt.innerText = "Uploading Failed😵";
-                        }
-                    } else {
-                        txt.innerText = "Err😶‍🌫️";
-                    }
-                };
-
-                xhr.send(formData);
-            } catch (error) {
-                txt.innerText = "Uploading Failed😵";
-            }
-        });
-    </script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@nexoracle/utils@1.1.18/dist/browser/index.global.js"></script>
+    <script src="script.js"></script>
 </body>
-  </html>
-  
+
+</html>

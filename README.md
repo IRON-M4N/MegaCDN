@@ -6,6 +6,9 @@ A lightweight and serverless CDN utilizing MEGA for file storage and delivery.
 
 - File upload and delivery via MEGA storage
 - Multiple account support (load balancing)
+- Multiple Files and folder Upload Support
+- Cool and Professional UI
+- **Optional upload-protection** using `Authorization` Header
 - **Optional auto-deletion** with configurable time periods
 - Supports both `MongoDB` and `Json`
 - Serverless deployment ready
@@ -57,11 +60,18 @@ npm install
 Modify `config.js` or use environment variables. Example `.env` file:
 
 ```
-MEGA_ACCOUNT=email:pass;email:pass # Your mega accounts email and pass
-TEMP=memory # Upload option
-AUTO_DELETE=true # Set false to disable auto-deletion
-DELETE_TIME=1440 # Default: 1 day (1440 minutes)
-MONGODB_URI=null # Optional for persistent tracking
+MEGA_ACCOUNT=email:pass;email:pass  # Multiple accounts for load balancing
+TEMP=memory                         # Upload storage option
+AUTO_DELETE=true                    # Enable/disable auto-deletion
+DELETE_TIME=1440                    # Minutes until deletion (default: 1 day)
+MONGODB_URI=null                    # Optional MongoDB connection string
+AUTHORIZATION=true                  # Enable/disable secure uploading
+AUTH_TOKEN=YOUR_BEARER_TOKEN        # Bearer token for authentication
+MAX_FILES=10                        # Maximum files per upload
+MAX_FILE_SIZE=50                    # Maximum file size in MB
+CACHE_TTL=3600                      # Cache duration in seconds
+MAX_REQUESTS=100                    # Max upload requests in specific time
+RATE_LIMIT=1 minute                 # 100 req per minute
 ```
 
 ## Starting the Server
@@ -87,7 +97,11 @@ Send a POST request to /upload with a multipart form containing a file.
   <summary>Curl - Single Mode</summary>
 
 ```sh
+# Single file without Authorization
  curl -X POST -F "file=@image.jpg" -F "mode=single" http://yourdomain.com/upload
+
+# Multiple Files With Authorizatoin
+ curl -X POST  -H "Authorization: Bearer YOUR_BEARER_TOKEN"  -F "file=@image1.jpg" -F "file=@image2.jpg" -F "mode=single" http://yourdomain.com/upload
 ```
 
 </details>
@@ -96,7 +110,11 @@ Send a POST request to /upload with a multipart form containing a file.
   <summary>Curl - Dual Mode</summary>
 
 ```sh
+# Single file without Authorization
 curl -X POST -F "file=@image.jpg" -F "mode=dual" -F "email=user@example.com" http://yourdomain.com/upload
+
+# Multiple Files With Authorizatoin
+curl -X POST -H "Authorization: Bearer YOUR_BEARER_TOKEN"  -F "file=@image1.jpg" -F "file=@image2.jpg" -F "file=@image.jpg" -F "mode=dual" -F "email=user@example.com" http://yourdomain.com/upload
 ```
 
 </details>
@@ -105,6 +123,7 @@ curl -X POST -F "file=@image.jpg" -F "mode=dual" -F "email=user@example.com" htt
   <summary>Node.js - Single Mode</summary>
 
 ```js
+// Single file without Authorization
 const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
@@ -122,6 +141,30 @@ async function uploadSingle() {
 }
 
 uploadSingle();
+
+// Multiple Files with Authorization
+async function uploadMultiple() {
+  const form = new FormData();
+
+  form.append("file", fs.createReadStream("image1.jpg"));
+  form.append("file", fs.createReadStream("image2.png"));
+
+  form.append("mode", "single");
+
+  const headers = {
+    ...form.getHeaders(),
+    Authorization: "Bearer YOUR_BEARER_TOKEN",
+  };
+
+  try {
+    const res = await axios.post("http://yourdomain.com/upload", form, { headers });
+    console.log("Upload successful:", res.data);
+  } catch (error) {
+    console.error("Upload failed:", error.response?.data || error.message);
+  }
+}
+
+uploadMultiple();
 ```
 
 </details>
@@ -130,6 +173,7 @@ uploadSingle();
   <summary>Node.js - Dual Mode</summary>
 
 ```js
+// Single file without Authorization
 const fs = require("fs");
 const axios = require("axios");
 const FormData = require("form-data");
@@ -148,6 +192,31 @@ async function uploadDual() {
 }
 
 uploadDual();
+
+// Multiple Files with Authorization
+async function uploadMultiple() {
+  const form = new FormData();
+
+  form.append("file", fs.createReadStream("image1.jpg"));
+  form.append("file", fs.createReadStream("image2.png"));
+
+  form.append("mode", "dual");
+  form.append("email", "your@mega-account.com");
+
+  const headers = {
+    ...form.getHeaders(),
+    Authorization: "Bearer YOUR_BEARER_TOKEN",
+  };
+
+  try {
+    const res = await axios.post("http://yourdomain.com/upload", form, { headers });
+    console.log("Upload successful:", res.data);
+  } catch (error) {
+    console.error("Upload failed:", error.response?.data || error.message);
+  }
+}
+
+uploadMultiple();
 ```
 
 </details>
@@ -180,11 +249,8 @@ uploadDual();
 
 ## To-Do
 
-- [ ] Multiple file upload support
-- [ ] Fix UI
 - [ ] Add custom file name
 - [ ] Proper logging (error and alerts)
-- [ ] Fix webpage
 
 ## Contributing
 
