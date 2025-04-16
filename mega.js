@@ -200,7 +200,7 @@ class Client {
         const filePath = path.join(this.jsonStoragePath, `${fileName}.json`);
         fs.writeFileSync(filePath, JSON.stringify({ fileName, deleteTime }));
       }
-      console.log(`Scheduled ${fileName} for deletion after ${minutes} minutes`);
+      // console.log(`Scheduled ${fileName} for deletion after ${minutes} minutes`);
     } catch (error) {
       console.error(`Error scheduling file deletion for ${fileName}:`, error);
     }
@@ -253,7 +253,7 @@ class Client {
             console.error(`Error auto-deleting file ${fileName}:`, err);
             reject(err);
           } else {
-            console.log(`Auto-deleted file ${fileName}`);
+            // console.log(`Auto-deleted file ${fileName}`);
             resolve();
           }
         });
