@@ -29,7 +29,7 @@
     "file-type": "^16.5.4",
     "megajs": "*",
     "mongoose": "^8.13.2",
-    "pm2": "^5.4.3"
+    "pm2": "^6.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
