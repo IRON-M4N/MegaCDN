@@ -27,7 +27,7 @@
     "async-mutex": "^0.5.0",
     "fastify": "^5.2.1",
     "file-type": "^16.5.4",
-    "megajs": "^1.3.5",
+    "megajs": "*",
     "mongoose": "^8.13.2",
     "pm2": "^5.4.3"
   },
