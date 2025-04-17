@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
               showNotification(`${file.name} uploaded successfully!`, "success");
             } else {
               progressText.innerText = "Failed";
-              showNotification(`Failed to upload ${file.name}`, "error");
+              showNotification(`${response.error || "Unknown server error"}`, "error");
             }
           } catch (error) {
             progressText.innerText = "Error";
@@ -235,7 +235,12 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         } else {
           progressText.innerText = "Error";
-          showNotification(`Server error (${xhr.status})`, "error");
+          try {
+            const response = JSON.parse(xhr.responseText);
+            showNotification(`${response.error || "Unknown server error"}`, "error");
+          } catch (e) {
+            showNotification(`Server error (${xhr.status})`, "error");
+          }
         }
       };
 
