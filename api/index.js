@@ -2,8 +2,8 @@ const fastifyRateLimit = require("@fastify/rate-limit");
 const fastifyMultipart = require("@fastify/multipart");
 const FileType = require("file-type");
 const stream = require("stream");
-const { runtime, formatBytes } = require("@nexoracle/utils");
-require("dotenv").config();
+const { runtime, formatBytes, env } = require("@nexoracle/utils");
+env.load();
 const mega = require("../mega.js");
 const config = require("../config.js");
 const fastify = require("fastify")({ logger: 0 });
@@ -17,7 +17,7 @@ fastify.register(require("@fastify/static"), {
 
 fastify.register(fastifyRateLimit, config.rateLimit);
 fastify.register(fastifyMultipart, {
-  limits: { fileSize: 1024 * 1024 * config.server.maxFileSize, files: config.server.maxFiles },
+  limits: { fileSize: 1024 * 1024 * Number(config.server.maxFileSize), files: Number(config.server.maxFiles) },
 });
 
 fastify.addHook("onSend", (request, reply, payload, done) => {
@@ -121,6 +121,21 @@ fastify.get("/media/*", async (request, reply) => {
     console.log("Media error:", error);
     reply.code(404).send({ error: error.message });
   }
+});
+
+fastify.get("/info", async (request, reply) => {
+  const info = {
+    request_limit: config.rateLimit.max,
+    rate_limit: config.rateLimit.timeWindow,
+    file_size: config.server.maxFileSize,
+    max_files: config.server.maxFiles,
+  };
+
+  if (config.autoDelete.enable === true) {
+    info.auto_delete_time = config.autoDelete.minutes;
+  }
+
+  return reply.send(info);
 });
 
 var start = async () => {

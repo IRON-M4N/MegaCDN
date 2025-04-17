@@ -22,6 +22,34 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileList = document.getElementById("fileList");
   const dragZone = document.getElementById("dragZone");
   const folderUploadBtn = document.getElementById("folderUpload");
+  const infoIcon = document.getElementById("uploadInfoIcon");
+  const infoTooltip = document.getElementById("infoTooltip");
+  const tooltipContent = infoTooltip.querySelector(".tooltip-content");
+
+  infoIcon.addEventListener("click", () => {
+    infoTooltip.classList.toggle("active");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!infoIcon.contains(e.target)) {
+      infoTooltip.classList.remove("active");
+    }
+  });
+
+  fetch("/info")
+    .then((response) => response.json())
+    .then((data) => {
+      tooltipContent.innerHTML = `
+        <p><i class="fas fa-tachometer-alt"></i>${data.request_limit} requests in ${data.rate_limit}</p>
+        <p><i class="fas fa-file-alt"></i>${data.file_size}MB max file size</p>
+        <p><i class="fas fa-copy"></i>Max ${data.max_files} files can be uploaded</p>
+        ${data.auto_delete_time ? `<p><i class="fas fa-clock"></i>Auto deletes after ${formatMinutes(data.auto_delete_time)}</p>` : ""}
+      `;
+    })
+    .catch((error) => {
+      tooltipContent.innerHTML = `<p>Error loading config info</p>`;
+      console.error("Error fetching config info:", error);
+    });
 
   folderUploadBtn.addEventListener("click", function () {
     const input = document.createElement("input");
@@ -246,5 +274,30 @@ document.addEventListener("DOMContentLoaded", function () {
         notificationContainer.removeChild(notification);
       }, 300);
     }, 3000);
+  }
+
+  function formatMinutes(minutes) {
+    minutes = Number.parseInt(minutes, 10);
+
+    if (isNaN(minutes)) return "unknown time";
+
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
+    } else if (minutes < 24 * 60) {
+      const hours = Math.floor(minutes / 60);
+      return `${hours} hour${hours !== 1 ? "s" : ""}`;
+    } else if (minutes < 7 * 24 * 60) {
+      const days = Math.floor(minutes / (24 * 60));
+      return `${days} day${days !== 1 ? "s" : ""}`;
+    } else if (minutes < 30 * 24 * 60) {
+      const weeks = Math.floor(minutes / (7 * 24 * 60));
+      return `${weeks} week${weeks !== 1 ? "s" : ""}`;
+    } else if (minutes < 365 * 24 * 60) {
+      const months = Math.floor(minutes / (30 * 24 * 60));
+      return `${months} month${months !== 1 ? "s" : ""}`;
+    } else {
+      const years = Math.floor(minutes / (365 * 24 * 60));
+      return `${years} year${years !== 1 ? "s" : ""}`;
+    }
   }
 });

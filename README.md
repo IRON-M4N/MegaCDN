@@ -74,6 +74,7 @@ CACHE_TTL=3600                      # Cache duration in seconds
 MAX_REQUESTS=100                    # Max upload requests in specific time
 RATE_LIMIT=1 minute                 # 100 req per minute
 ```
+Note: If you change `AUTH_TOKEN` then update it in public/script.js at line `189`
 
 ## Starting the Server
 
