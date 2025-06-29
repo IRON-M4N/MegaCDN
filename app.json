@@ -1,0 +1,83 @@
+{
+  "name": "MegaCDN",
+  "description": "A CDN that uses MEGA for storage",
+  "repository": "https://github.com/IRON-M4N/MegaCDN",
+  "keywords": ["cdn", "mega", "nodejs"],
+  "env": {
+    "MEGA_ACCOUNT": {
+      "description": "Your Mega.nz account in email:pass format",
+      "required": true
+    },
+    "PORT": {
+      "description": "Port",
+      "value": "3000"
+    },
+    "MAX_FILE_SIZE": {
+      "description": "Max upload file size in MB",
+      "value": "100"
+    },
+    "MAX_FILES": {
+      "description": "Max files per upload",
+      "value": "10"
+    },
+    "CACHE_TTL": {
+      "description": "Cache TTL in seconds",
+      "value": "3600"
+    },
+    "MAX_REQUESTS": {
+      "description": "Rate limit max requests",
+      "value": "100"
+    },
+    "RATE_LIMIT": {
+      "description": "Rate limit time window",
+      "value": "1 minute"
+    },
+    "AUTHORIZATION": {
+      "description": "Enable authorization true/false",
+      "value": "false"
+    },
+    "AUTH_TOKEN": {
+      "description": "Comma-separated auth tokens",
+      "value": ""
+    },
+    "AUTO_DELETE": {
+      "description": "Enable auto delete true/false",
+      "value": "false"
+    },
+    "DELETE_TIME": {
+      "description": "Auto delete time in minutes",
+      "value": "1440"
+    },
+    "TEMP": {
+      "description": "Temporary storage method: file or memory",
+      "value": "memory"
+    },
+    "DATABASE_URL": {
+      "description": "Database url",
+      "value": ""
+    },
+    "FILENAMES": {
+      "description": "Short filename instead of mega's string true/false",
+      "value": "false"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "npm run build"
+  }
+}

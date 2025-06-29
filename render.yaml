@@ -1,34 +1,37 @@
 services:
-  - type: web
-    name: megacdn
-    env: node 
-    buildCommand: npm install
-    startCommand: npm start
-    plan: free  # Change to 'starter' or 'pro' if needed
-    envVars:
-      - key: MEGA_ACCOUNT
-        value: email:pass;email:pass
-      - key: MAX_REQUESTS
-        value: 100
-      - key: RATE_LIMIT
-        value: 1 minute
-      - key: AUTO_DELETE
-        value: false
-      - key: DELETE_TIME
-        value: 1440
-      - key: MONGODB_URI
-        value: null
-      - key: AUTHORIZATION
-        value: false
-      - key: AUTH_TOKEN
-        value: YOUR_BEARER_TOKEN
-      - key: MAX_FILE_SIZE
-        value: 100
-      - key: MAX_FILES
-        value: 10
-      - key: CACHE_TTL
-        value: 3600
-      - key: PORT
-        value: 3000
-      - key: TEMP
-        value: memory
+- type: web
+  name: mega-cdn
+  env: node
+  plan: free
+  buildCommand: npm install && npm run build
+  startCommand: npm start
+  autoDeploy: true
+  envVars:
+    - key: MEGA_ACCOUNT
+      value: "email:password;email:password"
+    - key: PORT
+      value: "3000"
+    - key: MAX_FILE_SIZE
+      value: "100"
+    - key: MAX_FILES
+      value: "10"
+    - key: CACHE_TTL
+      value: "3600"
+    - key: MAX_REQUESTS
+      value: "100"
+    - key: RATE_LIMIT
+      value: "1 minute"
+    - key: AUTHORIZATION
+      value: "false"
+    - key: AUTH_TOKEN
+      value: "CustomApikey"
+    - key: AUTO_DELETE
+      value: "false"
+    - key: DELETE_TIME
+      value: "1440"
+    - key: TEMP
+      value: "memory"
+    - key: DATABASE_URL
+      value: ""
+    - key: FILENAMES
+      value: "false"

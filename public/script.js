@@ -1,308 +1,525 @@
-document.addEventListener("DOMContentLoaded", function () {
-  particlesJS("particles-js", {
-    particles: {
-      number: { value: 80, density: { enable: true, value_area: 800 } },
-      color: { value: "#ff00ff" },
-      shape: { type: "circle" },
-      opacity: { value: 0.5 },
-      size: { value: 3, random: true },
-      line_linked: { enable: true, distance: 150, color: "#ff00ff", opacity: 0.4, width: 1 },
-      move: { enable: true, speed: 2 },
-    },
-    interactivity: {
-      events: {
-        onhover: { enable: true, mode: "repulse" },
-        onclick: { enable: true, mode: "push" },
-      },
-    },
-    retina_detect: true,
-  });
+const uploadForm = document.getElementById('uploadForm');
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const submitButton = document.getElementById('submitButton');
+const buttonText = submitButton.querySelector('.button-text');
+const buttonLoader = submitButton.querySelector('.button-loader');
+const uploadResults = document.getElementById('uploadResults');
+const resultsList = document.getElementById('resultsList');
+const emailGroup = document.getElementById('emailGroup');
+const emailInput = document.getElementById('emailInput');
 
-  const fileInput = document.getElementById("fileInput");
-  const fileList = document.getElementById("fileList");
-  const dragZone = document.getElementById("dragZone");
-  const folderUploadBtn = document.getElementById("folderUpload");
-  const infoIcon = document.getElementById("uploadInfoIcon");
-  const infoTooltip = document.getElementById("infoTooltip");
-  const tooltipContent = infoTooltip.querySelector(".tooltip-content");
+var selectedFiles = [];
+var isUploading = false;
 
-  infoIcon.addEventListener("click", () => {
-    infoTooltip.classList.toggle("active");
-  });
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    initializeAnimations();
+    initializeNavigation();
+});
 
-  document.addEventListener("click", (e) => {
-    if (!infoIcon.contains(e.target)) {
-      infoTooltip.classList.remove("active");
-    }
-  });
+function initializeEventListeners() {
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    uploadArea.addEventListener('drop', handleDrop);
+    uploadForm.addEventListener('submit', handleFormSubmit);
 
-  fetch("/info")
-    .then((response) => response.json())
-    .then((data) => {
-      tooltipContent.innerHTML = `
-        <p><i class="fas fa-tachometer-alt"></i>${data.request_limit} requests in ${data.rate_limit}</p>
-        <p><i class="fas fa-file-alt"></i>${data.file_size}MB max file size</p>
-        <p><i class="fas fa-copy"></i>Max ${data.max_files} files can be uploaded</p>
-        ${data.auto_delete_time ? `<p><i class="fas fa-clock"></i>Auto deletes after ${formatMinutes(data.auto_delete_time)}</p>` : ""}
-      `;
-    })
-    .catch((error) => {
-      tooltipContent.innerHTML = `<p>Error loading config info</p>`;
-      console.error("Error fetching config info:", error);
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, preventDefaults, false);
     });
+}
 
-  folderUploadBtn.addEventListener("click", function () {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.webkitdirectory = true;
-    input.directory = true;
-    input.multiple = true;
-
-    input.addEventListener("change", function (e) {
-      handleFiles(e.target.files);
-    });
-
-    input.click();
-  });
-
-  ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
-    dragZone.addEventListener(eventName, preventDefaults, false);
-    document.body.addEventListener(eventName, preventDefaults, false);
-  });
-
-  function preventDefaults(e) {
+function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
-  }
+}
 
-  ["dragenter", "dragover"].forEach((eventName) => {
-    dragZone.addEventListener(eventName, highlight, false);
-  });
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files);
+    updateSelectedFiles(files);
+}
 
-  ["dragleave", "drop"].forEach((eventName) => {
-    dragZone.addEventListener(eventName, unhighlight, false);
-  });
+function handleDragOver(e) {
+    uploadArea.classList.add('drag-over');
+}
 
-  function highlight() {
-    dragZone.classList.add("active");
-  }
+function handleDragLeave(e) {
+    uploadArea.classList.remove('drag-over');
+}
 
-  function unhighlight() {
-    dragZone.classList.remove("active");
-  }
+function handleDrop(e) {
+    uploadArea.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files);
+    updateSelectedFiles(files);
+}
 
-  dragZone.addEventListener("drop", function (e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-  });
+function updateSelectedFiles(files) {
+    selectedFiles = files;
+    updateUploadAreaText();
 
-  fileInput.addEventListener("change", function (event) {
-    handleFiles(event.target.files);
-  });
-
-  function handleFiles(files) {
-    if (!files || files.length === 0) return;
-
-    for (let i = 0; i < files.length; i++) {
-      uploadFile(files[i]);
+    uploadArea.style.transform = 'scale(0.98)';
+    uploadArea.style.filter = 'brightness(1.1)';
+    
+    if (files.length > 0) {
+        uploadArea.style.boxShadow = '0 0 20px rgba(0, 112, 243, 0.3)';
     }
+    
+    setTimeout(() => {
+        uploadArea.style.transform = 'scale(1)';
+        uploadArea.style.filter = 'brightness(1)';
+        uploadArea.style.boxShadow = '';
+    }, 300);
+    
 
-    fileInput.value = "";
+    const uploadPrimary = uploadArea.querySelector('.upload-primary');
+    if (files.length > 0) {
+        uploadPrimary.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            uploadPrimary.style.transform = 'scale(1)';
+        }, 200);
+    }
+}
 
-    if (files.length === 1) {
-      showNotification("File added to upload queue", "success");
+function updateUploadAreaText() {
+    const uploadPrimary = uploadArea.querySelector('.upload-primary');
+
+    if (selectedFiles.length > 0) {
+        uploadPrimary.textContent = `${selectedFiles.length} file(s) selected - Total size: ${formatFileSize(getTotalSize())}`;
+        uploadArea.style.borderColor = 'var(--accent-primary)';
+        uploadArea.style.background = 'rgba(0, 112, 243, 0.05)';
     } else {
-      showNotification(`${files.length} files added to upload queue`, "success");
+        uploadPrimary.textContent = 'Choose files or drag them here';
+        uploadArea.style.borderColor = 'var(--border-primary)';
+        uploadArea.style.background = 'var(--bg-tertiary)';
     }
-  }
+}
 
-  function uploadFile(file) {
-    const fileItem = document.createElement("div");
-    fileItem.className = "file-item";
+function getTotalSize() {
+    return selectedFiles.reduce((total, file) => total + file.size, 0);
+}
 
-    const fileExtension = file.name.split(".").pop().toLowerCase();
-    let fileTypeClass = "unknown";
-    let fileTypeIcon = "fa-file";
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
-    if (["jpg", "jpeg", "png", "gif", "webp", "svg", "ico", "heic", "heif", "avif"].includes(fileExtension)) {
-      fileTypeClass = "image";
-      fileTypeIcon = "fa-file-image";
-    } else if (["mp4", "webm", "avi", "mov", "wmv", "flv", "mkv", "m4v", "3gp", "mpeg", "mpg", "ogv"].includes(fileExtension)) {
-      fileTypeClass = "video";
-      fileTypeIcon = "fa-file-video";
-    } else if (["doc", "docx", "pdf", "txt", "rtf", "odt", "xls", "xlsx", "ppt", "pptx", "csv", "md"].includes(fileExtension)) {
-      fileTypeClass = "document";
-      fileTypeIcon = "fa-file-alt";
-    } else if (["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso"].includes(fileExtension)) {
-      fileTypeClass = "archive";
-      fileTypeIcon = "fa-file-archive";
-    } else if (["mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "alac"].includes(fileExtension)) {
-      fileTypeClass = "audio";
-      fileTypeIcon = "fa-file-audio";
-    } else if (["html", "css", "js", "ts", "php", "py", "java", "cpp", "c", "cs", "rb", "go", "rs", "swift", "kt", "json", "xml", "yml", "sh"].includes(fileExtension)) {
-      fileTypeClass = "code";
-      fileTypeIcon = "fa-file-code";
+
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    if (selectedFiles.length === 0) {
+        showNotification('Please select files to upload', 'error');
+        return;
     }
 
-    const { formatBytes } = utils;
-    const formattedSize = formatBytes(file.size);
+    if (isUploading) return;
 
-    fileItem.innerHTML = `
-            <div class="file-header">
-                <div class="file-info">
-                    <div class="file-icon ${fileTypeClass}">
-                        <i class="fas ${fileTypeIcon}"></i>
-                    </div>
-                    <div class="file-details">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${formattedSize}</div>
-                    </div>
-                </div>
-                <div class="file-actions" style="display: none;">
-                    <button class="file-button view-btn" title="View file">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="file-button copy-btn" title="Copy link">
-                        <i class="fas fa-link"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-bar"></div>
-            </div>
-            <div class="progress-text">Waiting...</div>
-        `;
+    await uploadFiles(selectedFiles, 'single', null);
+}
 
-    fileList.appendChild(fileItem);
-
-    const progressBar = fileItem.querySelector(".progress-bar");
-    const progressText = fileItem.querySelector(".progress-text");
-    const fileActions = fileItem.querySelector(".file-actions");
-    let formData = new FormData();
-
-    formData.append("file", file);
+async function uploadFiles(files, mode, email) {
+    isUploading = true;
+    setLoadingState(true);
+    setUploadGlow('uploading');
 
     try {
-      let xhr = new XMLHttpRequest();
-      xhr.open("POST", "/upload", true);
-      xhr.setRequestHeader("Authorization", "Bearer " + "YOUR_BEARER_TOKEN");
+        const formData = new FormData();
 
-      xhr.upload.onprogress = function (event) {
-        if (event.lengthComputable) {
-          let percentComplete = (event.loaded / event.total) * 100;
-          progressBar.style.width = percentComplete + "%";
-          progressText.innerText = Math.round(percentComplete) + "%";
-        }
-      };
+        files.forEach(file => {
+            formData.append('file', file);
+        });
 
-      xhr.onload = function () {
-        if (xhr.status === 200) {
-          try {
-            let response = JSON.parse(xhr.responseText);
-            if (response.success) {
-              progressText.innerText = "Completed";
-              progressBar.style.width = "100%";
-              fileActions.style.display = "flex";
+        formData.append('mode', 'single');
 
-              const viewBtn = fileItem.querySelector(".view-btn");
-              const copyBtn = fileItem.querySelector(".copy-btn");
-              const fileUrl = response.files[0].url;
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
 
-              viewBtn.addEventListener("click", function () {
-                window.open(fileUrl, "_blank");
-              });
+        const result = await response.json();
 
-              copyBtn.addEventListener("click", function () {
-                navigator.clipboard
-                  .writeText(fileUrl)
-                  .then(function () {
-                    showNotification("Link copied to clipboard!", "success");
-                  })
-                  .catch(function () {
-                    showNotification("Failed to copy link", "error");
-                  });
-              });
-
-              showNotification(`${file.name} uploaded successfully!`, "success");
-            } else {
-              progressText.innerText = "Failed";
-              showNotification(`${response.error || "Unknown server error"}`, "error");
-            }
-          } catch (error) {
-            progressText.innerText = "Error";
-            showNotification("Failed to process server response", "error");
-          }
+        if (response.ok && result.success) {
+            setUploadGlow('success');
+            showUploadResults(result.files);
+            resetForm();
+            showNotification('Files uploaded successfully!', 'success');
+            
+            setTimeout(() => {
+                setUploadGlow('normal');
+            }, 1000);
         } else {
-          progressText.innerText = "Error";
-          try {
-            const response = JSON.parse(xhr.responseText);
-            showNotification(`${response.error || "Unknown server error"}`, "error");
-          } catch (e) {
-            showNotification(`Server error (${xhr.status})`, "error");
-          }
+            throw new Error(result.error || 'Upload failed');
         }
-      };
-
-      xhr.onerror = function () {
-        progressText.innerText = "Error";
-        showNotification("Network error occurred", "error");
-      };
-
-      xhr.send(formData);
     } catch (error) {
-      progressText.innerText = "Error";
-      showNotification(`Error: ${error.message}`, "error");
+        console.error('Upload error:', error);
+        setUploadGlow('error');
+        showNotification(error.message || 'Upload failed. Please try again.', 'error');
+        
+        setTimeout(() => {
+            setUploadGlow('normal');
+        }, 4500);
+    } finally {
+        isUploading = false;
+        setLoadingState(false);
     }
-  }
+}
 
-  function showNotification(message, type = "success") {
-    const notificationContainer = document.getElementById("notificationContainer");
+function setLoadingState(loading) {
+    submitButton.disabled = loading;
 
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
+    if (loading) {
+        buttonText.style.opacity = '0';
+        buttonLoader.style.display = 'block';
+        submitButton.style.background = 'var(--text-muted)';
+    } else {
+        buttonText.style.opacity = '1';
+        buttonLoader.style.display = 'none';
+        submitButton.style.background = 'var(--gradient-primary)';
+    }
+}
 
-    const icon = type === "success" ? "fa-check-circle" : "fa-exclamation-circle";
+function setUploadGlow(state) {
+    const body = document.body;
+    const uploadContainer = document.querySelector('.upload-container');
+    body.classList.remove('uploading', 'upload-error');
+    uploadContainer.classList.remove('uploading', 'upload-error');
+    switch(state) {
+        case 'uploading':
+            body.classList.add('uploading');
+            uploadContainer.classList.add('uploading');
+            break;
+        case 'error':
+            body.classList.add('upload-error');
+            uploadContainer.classList.add('upload-error');
+            break;
+        case 'success':
+            body.classList.add('uploading');
+            uploadContainer.classList.add('uploading');
+            break;
+        case 'normal':
+        default:
+            break;
+    }
+}
 
-    notification.innerHTML = `
-            <div class="notification-icon">
-                <i class="fas ${icon}"></i>
-            </div>
-            <div class="notification-text">${message}</div>
-        `;
+function showUploadResults(files) {
+    resultsList.innerHTML = '';
 
-    notificationContainer.appendChild(notification);
+    files.forEach((file, index) => {
+        const resultItem = createResultItem(file, index);
+        resultItem.style.animationDelay = `${index * 0.1}s`;
+        resultsList.appendChild(resultItem);
+    });
+
+    uploadResults.style.display = 'block';
+    animateElementIn(uploadResults);
 
     setTimeout(() => {
-      notification.classList.add("fadeOut");
-      setTimeout(() => {
-        notificationContainer.removeChild(notification);
-      }, 300);
-    }, 3000);
-  }
+        const items = resultsList.querySelectorAll('.result-item');
+        items.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    }, 200);
 
-  function formatMinutes(minutes) {
-    minutes = Number.parseInt(minutes, 10);
+    setTimeout(() => {
+        uploadResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+}
 
-    if (isNaN(minutes)) return "unknown time";
+function createResultItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'result-item';
+    item.style.animationDelay = `${index * 0.1}s`;
 
-    if (minutes < 60) {
-      return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
-    } else if (minutes < 24 * 60) {
-      const hours = Math.floor(minutes / 60);
-      return `${hours} hour${hours !== 1 ? "s" : ""}`;
-    } else if (minutes < 7 * 24 * 60) {
-      const days = Math.floor(minutes / (24 * 60));
-      return `${days} day${days !== 1 ? "s" : ""}`;
-    } else if (minutes < 30 * 24 * 60) {
-      const weeks = Math.floor(minutes / (7 * 24 * 60));
-      return `${weeks} week${weeks !== 1 ? "s" : ""}`;
-    } else if (minutes < 365 * 24 * 60) {
-      const months = Math.floor(minutes / (30 * 24 * 60));
-      return `${months} month${months !== 1 ? "s" : ""}`;
-    } else {
-      const years = Math.floor(minutes / (365 * 24 * 60));
-      return `${years} year${years !== 1 ? "s" : ""}`;
+    item.innerHTML = `
+        <div class="result-header">
+            <span class="result-name">${file.name}</span>
+            <span class="result-size">${file.formattedSize}</span>
+        </div>
+        <div class="result-url" onclick="copyToClipboard('${file.url}', this)" style="cursor: pointer;">
+            <span class="url-text">${file.url}</span>
+        </div>
+        ${file.expires ? `<div class="result-expires">Expires in: ${file.formattedExpires}</div>` : ''}
+    `;
+
+    return item;
+}
+
+function resetForm() {
+    selectedFiles = [];
+    fileInput.value = '';
+    updateUploadAreaText();
+}
+
+async function copyToClipboard(text, element) {
+    try {
+        await navigator.clipboard.writeText(text);
+        
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        `;
+        
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = '50%';
+        ripple.style.top = '50%';
+        ripple.style.marginLeft = -size/2 + 'px';
+        ripple.style.marginTop = -size/2 + 'px';
+        
+        element.style.position = 'relative';
+        element.appendChild(ripple);
+        
+        if (!document.querySelector('#ripple-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'ripple-keyframes';
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(2);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        const originalBg = element.style.background;
+        element.style.background = 'rgba(255, 255, 255, 0.2)';
+        element.style.transition = 'all 0.3s ease';
+        element.style.transform = 'scale(1.02)';
+
+        setTimeout(() => {
+            element.style.background = originalBg;
+            element.style.transform = 'scale(1)';
+            if (ripple.parentNode) {
+                ripple.parentNode.removeChild(ripple);
+            }
+        }, 1000);
+
+        showNotification('URL copied to clipboard!', 'success');
+    } catch (error) {
+        console.error('Copy failed:', error);
+        showNotification('Failed to copy URL', 'error');
     }
-  }
-});
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '2rem',
+        right: '2rem',
+        padding: '1rem 1.5rem',
+        borderRadius: '0.5rem',
+        color: 'white',
+        fontWeight: '600',
+        zIndex: '10000',
+        transform: 'translateX(100%)',
+        transition: 'transform 0.3s ease',
+        boxShadow: 'var(--shadow-lg)'
+    });
+
+    const colors = {
+        success: 'var(--success)',
+        error: 'var(--error)',
+        warning: 'var(--warning)',
+        info: 'var(--accent-primary)'
+    };
+    notification.style.background = colors[type] || colors.info;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 4000);
+}
+
+function animateElementIn(element) {
+    element.style.opacity = '0';
+    element.style.transform = 'translateY(20px)';
+
+    setTimeout(() => {
+        element.style.transition = 'all 0.5s ease';
+        element.style.opacity = '1';
+        element.style.transform = 'translateY(0)';
+    }, 50);
+}
+
+function toggleFaq(button) {
+    const faqItem = button.closest('.faq-item');
+    const isActive = faqItem.classList.contains('active');
+
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    if (!isActive) {
+        faqItem.classList.add('active');
+    }
+
+    const icon = button.querySelector('.faq-icon');
+    icon.style.transform = isActive ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function initializeNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                const targetId = href.substring(1);
+                const targetElement = document.getElementById(targetId);
+
+                if (targetElement) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                      targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    });
+
+    window.addEventListener('scroll', updateActiveNavLink);
+}
+
+function updateActiveNavLink() {
+    const sections = ['home', 'faq'];
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    var currentSection = 'home';
+
+    sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            const rect = section.getBoundingClientRect();
+            if (rect.top <= 100 && rect.bottom >= 100) {
+                currentSection = sectionId;
+            }
+        }
+    });
+
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('active');
+        }
+    });
+}
+
+function initializeAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    const animatedElements = document.querySelectorAll('.faq-item, .upload-container');
+    animatedElements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = 'all 0.6s ease';
+        observer.observe(el);
+    });
+
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelector('.bg-grid');
+        if (parallax) {
+            parallax.style.transform = `translate(${scrolled * 0.1}px, ${scrolled * 0.1}px)`;
+        }
+    });
+
+    animateTyping();
+}
+
+function animateTyping() {
+    const titleLines = document.querySelectorAll('.title-line');
+
+    titleLines.forEach((line, index) => {
+        const text = line.textContent;
+        line.textContent = '';
+        line.style.opacity = '1';
+
+        setTimeout(() => {
+            var charIndex = 0;
+            const typeInterval = setInterval(() => {
+                line.textContent += text[charIndex];
+                charIndex++;
+
+                if (charIndex >= text.length) {
+                    clearInterval(typeInterval);
+                }
+            }, 50);
+        }, index * 1000);
+    });
+}
+
+function debounce(func, wait) {
+    var timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+const debouncedScrollHandler = debounce(updateActiveNavLink, 100);
+window.addEventListener('scroll', debouncedScrollHandler);
+
+function preloadResources() {
+    const criticalImages = [
+    ];
+
+    criticalImages.forEach(src => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = src;
+        document.head.appendChild(link);
+    });
+}
+
+preloadResources();
+
