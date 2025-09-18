@@ -180,7 +180,7 @@ class MegaClient {
       
       for (const account of this.accounts) {
         try {
-          const files = await account.storage.getChildren();
+          const files = account.storage.root.children;
           const file = files.find((x: any) => x.name === record.fileName);
 
           if (file) {
