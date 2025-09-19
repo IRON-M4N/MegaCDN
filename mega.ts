@@ -1,16 +1,16 @@
-import { Mutex } from 'async-mutex';
-import * as Mega from 'megajs';
-import { Config, MegaAccount, UploadMode, UploadQuery } from './types';
-import database from './database';
-import { Readable } from 'stream';
+import { Mutex } from "async-mutex";
+import * as Mega from "megajs";
+import { Config, MegaAccount, UploadMode, UploadQuery } from "./types";
+import database from "./database";
+import { Readable } from "stream";
 
 function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    stream.on('data', (chunk) => chunks.push(chunk));
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', (err) => {
-      console.error('Error stream:', err);
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("error", (err) => {
+      console.error("Error stream:", err);
       reject(err);
     });
   });
@@ -19,24 +19,27 @@ function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 async function fullUpload(uploadStream: any): Promise<any> {
   return new Promise((resolve, reject) => {
     // Timeout for lag uploads
-    const timeout = setTimeout(() => {
-      reject(new Error('Upload timeout after 5 mins'));
-    }, 5 * 60 * 1000);
+    const timeout = setTimeout(
+      () => {
+        reject(new Error("Upload timeout after 5 mins"));
+      },
+      5 * 60 * 1000,
+    );
 
-    uploadStream.on('complete', (file: any) => {
+    uploadStream.on("complete", (file: any) => {
       clearTimeout(timeout);
       file.link((err: any, url: string) => {
         if (err) {
-          console.error('Error linking file:', err);
+          console.error("Error linking file:", err);
           return reject(err);
         }
         resolve({ name: file.name, size: file.size, mime: file.mime, url });
       });
     });
 
-    uploadStream.on('error', (err: any) => {
+    uploadStream.on("error", (err: any) => {
       clearTimeout(timeout);
-      console.error('Could not upload media:', err);
+      console.error("Could not upload media:", err);
       reject(err);
     });
   });
@@ -51,22 +54,25 @@ class MegaClient {
   constructor(config: Config) {
     this.config = config;
   }
-  
-  async initialize() {
-    await database.initialize(this.config.DATABASE_URL);
-    const creds = this.config.mega.accounts;
-    if (!creds) throw new Error('No MEGA accounts found');
 
-    for (const entry of creds.split(';')) {
-      const [email, password] = entry.split(':');
+  async initialize() {
+    if (this.config.FILENAMES || this.config.autoDelete?.enable) {
+      await database.initialize(this.config.DATABASE_URL);
+    }
+
+    const creds = this.config.mega.accounts;
+    if (!creds) throw new Error("No MEGA accounts found");
+
+    for (const entry of creds.split(";")) {
+      const [email, password] = entry.split(":");
       if (email && password) {
         try {
           const storage = new (Mega as any).Storage({ email, password });
           await storage.ready;
-          this.accounts.push({ 
-            email, 
-            password, 
-            storage
+          this.accounts.push({
+            email,
+            password,
+            storage,
           });
 
           this.accountMutexes.set(email, new Mutex());
@@ -77,68 +83,71 @@ class MegaClient {
       }
     }
 
-    if (!this.accounts.length) throw new Error('No valid MEGA accounts');
+    if (!this.accounts.length) throw new Error("No valid MEGA accounts");
   }
-
   private selectAccount(mode: UploadMode, query?: UploadQuery): MegaAccount {
-    if (mode === 'dual' && query?.email) {
-      const account = this.accounts.find(a => a.email === query.email);
+    if (mode === "dual" && query?.email) {
+      const account = this.accounts.find((a) => a.email === query.email);
       if (!account) throw new Error(`No account for ${query.email}`);
       return account;
     }
-    
+
     const account = this.accounts[this.currentAccountIndex];
-    this.currentAccountIndex = (this.currentAccountIndex + 1) % this.accounts.length;
+    this.currentAccountIndex =
+      (this.currentAccountIndex + 1) % this.accounts.length;
     return account;
   }
 
   getAccountByEmail(email: string): MegaAccount | null {
-    return this.accounts.find(acc => acc.email === email) || null;
+    return this.accounts.find((acc) => acc.email === email) || null;
   }
 
   getZeroAcc(): MegaAccount {
-    if (!this.accounts.length) throw new Error('No accounts available');
+    if (!this.accounts.length) throw new Error("No accounts available");
     return this.accounts[0];
   }
 
   async uploadFile(
     filename: string,
     input: NodeJS.ReadableStream,
-    mode: UploadMode = 'single',
-    query?: UploadQuery
+    mode: UploadMode = "single",
+    query?: UploadQuery,
   ) {
     const account = this.selectAccount(mode, query);
 
     if (!account || !account.storage) {
-      throw new Error('Storage not available for this account - payment required or banned');
+      throw new Error(
+        "Storage not available for this account - payment required or banned",
+      );
     }
 
     const mutex = this.accountMutexes.get(account.email);
-    if (!mutex) throw new Error('Account mutex not found');
+    if (!mutex) throw new Error("Account mutex not found");
 
     const release = await mutex.acquire();
 
     try {
-      //console.log(`Uploading ${filename} to ${account.email}`);
       const buffer = await streamToBuffer(input);
       const size = buffer.length;
 
       if (size === 0) {
-        throw new Error('File is empty');
+        throw new Error("File is empty");
       }
 
-      const uploadStream = account.storage.upload({ 
-        name: filename, 
-        size: size, 
-        allowUploadBuffering: true 
+      const uploadStream = account.storage.upload({
+        name: filename,
+        size: size,
+        allowUploadBuffering: true,
       });
 
       Readable.from(buffer).pipe(uploadStream);
       const result = await fullUpload(uploadStream);
-     // console.log(`Successfully uploaded ${filename} to ${account.email}`);
       return result;
     } catch (error) {
-      throw new Error('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      throw new Error(
+        "Upload failed: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
     } finally {
       release();
     }
@@ -147,11 +156,11 @@ class MegaClient {
   async uploadBuffer(
     filename: string,
     buffer: Buffer,
-    mode: UploadMode = 'single',
-    query?: UploadQuery
+    mode: UploadMode = "single",
+    query?: UploadQuery,
   ) {
     if (!buffer || buffer.length === 0) {
-      throw new Error('Buffer is empty or null');
+      throw new Error("Buffer is empty or null");
     }
 
     return this.uploadFile(filename, Readable.from(buffer), mode, query);
@@ -159,25 +168,26 @@ class MegaClient {
 
   async getFile(filePath: string) {
     const primary = this.getZeroAcc();
-    const fileName = filePath.split('/').pop() || filePath;
-    const file = Object.values(primary.storage.files).find((f: any) => f.name === fileName);
-    if (!file) throw new Error('File not found');
+    const fileName = filePath.split("/").pop() || filePath;
+    const file = Object.values(primary.storage.files).find(
+      (f: any) => f.name === fileName,
+    );
+    if (!file) throw new Error("File not found");
     return file;
   }
 
   async scheduleDelete(name: string, mins: number) {
     const deleteTime = Date.now() + mins * 60_000;
     await database.save({ fileName: name, deleteTime });
-   // console.log(`Scheduled ${name} for deletion in ${mins} minutes`);
   }
 
   async processExpired() {
     const now = Date.now();
     const expired = await database.findExpired(now);
-    
+
     for (const record of expired) {
       let fileDeleted = false;
-      
+
       for (const account of this.accounts) {
         try {
           const files = account.storage.root.children;
@@ -190,7 +200,10 @@ class MegaClient {
             break;
           }
         } catch (error) {
-          console.error(`Failed to delete ${record.fileName} from ${account.email}:`, error);
+          console.error(
+            `Failed to delete ${record.fileName} from ${account.email}:`,
+            error,
+          );
         }
       }
 
@@ -208,20 +221,49 @@ class MegaClient {
 
   async cleanup() {
     try {
-      await this.processExpired();
+      if (this.config.autoDelete?.enable) {
+        await this.processExpired();
+      }
       await database.disconnect();
-      console.log('Cleanup completed');
+      console.log("Cleanup completed");
     } catch (error) {
-      console.error('Cleanup failed:', error);
+      console.error("Cleanup failed:", error);
     }
   }
-
   getAccountCount(): number {
     return this.accounts.length;
   }
 
   getAccountEmails(): string[] {
-    return this.accounts.map(acc => acc.email);
+    return this.accounts.map((acc) => acc.email);
+  }
+
+  public getAccounts(): MegaAccount[] {
+    return this.accounts;
+  }
+
+  public async deleteFileByName(fileName: string): Promise<boolean> {
+    for (const account of this.accounts) {
+      try {
+        await account.storage.reload();
+        const file = account.storage.find(fileName);
+        if (file && !file.directory) {
+          await file.delete(true);
+          return true;
+        }
+      } catch (error) {
+        console.error(
+          `Failed to delete ${fileName} from ${account.email}:`,
+          error,
+        );
+      }
+    }
+    return false;
+  }
+  public async getFileNameFromUrl(url: string): Promise<string> {
+    const file = Mega.File.fromURL(url);
+    await file.loadAttributes();
+    return file.name || "unknown";
   }
 
   async getStorageInfo(): Promise<any[]> {
@@ -239,7 +281,7 @@ class MegaClient {
         console.error(`Failed to get acc info for ${account.email}:`, error);
         info.push({
           email: account.email,
-          error: 'Failed to get acc info',
+          error: "Failed to get acc info",
         });
       }
     }
