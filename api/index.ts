@@ -17,6 +17,7 @@ const app = fastify({
   bodyLimit: 1024 * 1024 * config.server.maxFileSize,
   keepAliveTimeout: 5000,
   connectionTimeout: 10000,
+  trustProxy: true,
 });
 
 app.register(require("@fastify/static"), {
